@@ -1,0 +1,19 @@
+/*
+/*/
+
+!.gitignore
+
+# this is weird, but doesn't work without it => TO FIX!
+!/*
+/*/*
+
+!/Dependencies/*
+
+!/*/Assets
+!/*/Packages/
+!/*/ProjectSettings/
+
+/*/Assets/Kinect/Plugins/
+/*/Assets/Kinect/Plugins.meta
+/*/Assets/Kinect/Standard Assets/
+/*/Assets/Kinect/Standard Assets.meta
