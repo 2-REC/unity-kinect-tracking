@@ -262,4 +262,35 @@ public class KinectInputManager : MonoBehaviour {
         return pBodyData;
     }
 
+
+//TODO: remove, unless want to get a 3D point to image...?
+/*
+    public Vector2 GetImagePoint(Vector3 position) {
+
+        CameraSpacePoint cameraPoint = new CameraSpacePoint();
+        cameraPoint.X = position.x;
+        cameraPoint.Y = position.y;
+        cameraPoint.Z = -position.z;
+
+        Vector2 point = new Vector2();
+
+        ColorSpacePoint colorPoint = coordinateMapper.MapCameraPointToColorSpace(cameraPoint);
+        point.x = float.IsInfinity(colorPoint.X) ? 0 : colorPoint.X;
+        point.y = float.IsInfinity(colorPoint.Y) ? 0 : colorPoint.Y;
+
+        return point;
+    }
+*/
+    public Vector2 GetImagePoint(CameraSpacePoint cameraPoint) {
+
+        ColorSpacePoint colorSpacePoint = coordinateMapper.MapCameraPointToColorSpace(cameraPoint);
+
+        Vector2 point = new Vector2 {
+            x = float.IsInfinity(colorSpacePoint.X) ? 0 : colorSpacePoint.X,
+            y = float.IsInfinity(colorSpacePoint.Y) ? 0 : colorSpacePoint.Y
+        };
+
+        return point;
+    }
+
 }

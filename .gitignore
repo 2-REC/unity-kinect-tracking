@@ -13,7 +13,11 @@
 !/*/Packages/
 !/*/ProjectSettings/
 
+# Kinect related files
 /*/Assets/Kinect/Plugins/
 /*/Assets/Kinect/Plugins.meta
 /*/Assets/Kinect/Standard Assets/
 /*/Assets/Kinect/Standard Assets.meta
+
+# OpenCV related files
+/*/Assets/OpenCV/Plugins/*.dll*
