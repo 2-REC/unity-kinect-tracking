@@ -70,6 +70,7 @@ void DetectColourInROI(byte **raw, int width, int height, cv::Rect region, int h
 }
 
 //TODO: use "const ...& ..."?
+// Example of detecting HSV colour ranges in ROI
 bool FindBlobs(byte **raw, int width, int height, cv::Rect region, bool modifyImage, int numberColours, byte* hsvValues) {
 
 // "hsvValues" must be of length "numberColours * 3" (H, S, V value for each colour)
@@ -119,6 +120,32 @@ add(image(region), tmp, image(region));
 //TODO: return true; (check found data?)
 	return success;
 }
+
+
+// Example of applying a mask to the ROI
+// => Mask image is from different resolution
+// BUT = problem with matching!
+void ApplyMask(byte **raw, int width, int height, cv::Rect region, byte* mask, int maskWidth, int maskHeight) {
+	using namespace cv;
+	using namespace std;
+
+	Mat image(height, width, CV_8UC4, *raw);
+
+//TODO: check that ROI is in image!
+	Mat imageROI = image(region);
+
+	Mat imageMask(maskHeight, maskWidth, CV_8U, mask);
+	cvtColor(imageMask, imageMask, COLOR_GRAY2BGRA);
+
+	Size size(width, height);
+
+	Mat masked;
+	resize(imageMask, masked, size);
+
+	Mat maskROI = masked(region);
+	bitwise_and(imageROI, maskROI, imageROI);
+}
+
 
 
 #ifdef __cplusplus

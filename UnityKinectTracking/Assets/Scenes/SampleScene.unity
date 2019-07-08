@@ -130,6 +130,7 @@ GameObject:
   m_Component:
   - component: {fileID: 43542855}
   - component: {fileID: 43542854}
+  - component: {fileID: 43542856}
   m_Layer: 0
   m_Name: BodyTracker
   m_TagString: Untagged
@@ -165,6 +166,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &43542856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 43542853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb6982e1191a70143890d8afbdddb7a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  kinectInputManager: {fileID: 64174588}
+  nbBodiesTracked: 1
 --- !u!1 &64174586
 GameObject:
   m_ObjectHideFlags: 0
@@ -211,7 +226,7 @@ MonoBehaviour:
   useColorInput: 1
   useDepthInput: 0
   useBodyInput: 1
-  useBodyIndexInput: 0
+  useBodyIndexInput: 1
 --- !u!1 &360533080
 GameObject:
   m_ObjectHideFlags: 0
@@ -491,6 +506,7 @@ MonoBehaviour:
   HSVOrangeMax: {x: 20, y: 255, z: 255}
   kinectInputManager: {fileID: 64174588}
   bodyTracker: {fileID: 43542854}
+  bodyTracker3D: {fileID: 43542856}
   image: {fileID: 1423945385}
 --- !u!1 &1347717592
 GameObject:

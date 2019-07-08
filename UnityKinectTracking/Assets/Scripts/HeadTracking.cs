@@ -20,6 +20,7 @@ public class HeadTracking : MonoBehaviour {
 
     public KinectInputManager kinectInputManager;
     public BodyTracker2D bodyTracker;
+    public BodyTracker3D bodyTracker3D;
     public Image image;
 
     Texture2D texture;
@@ -66,10 +67,14 @@ public class HeadTracking : MonoBehaviour {
 
         ulong id = bodyTracker.GetTrackedId(1);
         if (id != 0) {
-
             Vector2 position = bodyTracker.GetPosition(id, JointType.Head);
             if (position != Vector2.zero) {
                 if ((position.x < COLOR_WIDTH) && (position.y < COLOR_HEIGHT)) {
+
+//TODO: should check bodyTracker3D as well
+//TODO: same IDs for 2D & 3D?
+Vector3 pos = bodyTracker3D.GetPosition(id, JointType.Head);
+Debug.Log("Head.z: " + pos.z);
 //TODO: determine using the depth value OR body index data (dependent on distance!)
 int roiWidth = 200 * roiWidthFactor;
 int roiHeight = 200 * roiHeightFactor;
@@ -88,6 +93,14 @@ int roiHeight = 200 * roiHeightFactor;
                     RectInt roi = new RectInt(x, y, w, h);
 
 //                    var rawImage = kinectInputManager.GetColorBuffer();
+
+
+//var bodyIndexImage = kinectInputManager.GetBodyIndexBuffer();
+//Debug.Log("index size: " + bodyIndexImage.Length);
+
+//var bodyIndexImage = kinectInputManager.GetDepthBuffer();
+//Debug.Log("index size: " + bodyIndexImage.Length);
+
 
 ////////
 //TODO: TO REMOVE!
@@ -115,6 +128,7 @@ hsvValues[17] = (byte)HSVOrangeMax.z;
 ////////
 
                     FindBlobs(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, hsvValues);
+//ApplyMask(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, bodyIndexImage, KinectInputManager.DEPTH_WIDTH, KinectInputManager.DEPTH_HEIGHT);
 
                     // continue process
                     //...
@@ -141,5 +155,8 @@ hsvValues[17] = (byte)HSVOrangeMax.z;
 
     [DllImport("UnityOpenCV")]
     static extern bool FindBlobs(ref byte[] raw, int width, int height, RectInt region, bool modifyImage, int numberColours, byte[] hsvValues);
+
+    [DllImport("UnityOpenCV")]
+    static extern void ApplyMask(ref byte[] raw, int width, int height, RectInt region, byte[] mask, int maskWidth, int maskHeight);
 
 }
