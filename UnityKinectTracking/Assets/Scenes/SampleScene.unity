@@ -483,6 +483,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roiWidthFactor: 2
   roiHeightFactor: 2
+  HSVGreenMin: {x: 90, y: 127, z: 127}
+  HSVGreenMax: {x: 95, y: 255, z: 255}
+  HSVPinkMin: {x: 165, y: 127, z: 127}
+  HSVPinkMax: {x: 175, y: 255, z: 255}
+  HSVOrangeMin: {x: 7, y: 127, z: 127}
+  HSVOrangeMax: {x: 20, y: 255, z: 255}
   kinectInputManager: {fileID: 64174588}
   bodyTracker: {fileID: 43542854}
   image: {fileID: 1423945385}

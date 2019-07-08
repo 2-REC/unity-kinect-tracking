@@ -10,6 +10,8 @@ extern "C" {
 
     __declspec(dllexport) void ProcessImage(byte **raw, int width, int height);
 	__declspec(dllexport) void ProcessImageRegion(byte **raw, int width, int height, cv::Rect roi);
+	__declspec(dllexport) void DetectColourInROI(byte **raw, int width, int height, cv::Rect region, int hue1, int sat1, int val1, int hue2, int sat2, int val2);
+	__declspec(dllexport) bool FindBlobs(byte **raw, int width, int height, cv::Rect region, bool modifyImage, int numberColours, byte* hsvValues);
 
 #ifdef __cplusplus
 }

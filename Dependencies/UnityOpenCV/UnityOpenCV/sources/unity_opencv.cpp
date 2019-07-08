@@ -29,14 +29,39 @@ void ProcessImageRegion(byte **raw, int width, int height, cv::Rect region) {
 	// Process frame here
 	// => Colour detection in ROI
 	//cout << "ROI: " << region.x << ", " << region.y << ", " << region.width << ", " << region.height << endl;
+//TODO: check that ROI is in image!
 	Mat imageROI = image(region);
 
 	Mat imageHSV;
 	Mat threshold;
 
-	// hardcoded "light blue" colour
-	Scalar col1(106, 60, 90);
-	Scalar col2(124, 255, 255);
+	// hardcoded "pink" colour (?)
+	Scalar col1(161, 155, 84);
+	Scalar col2(179, 255, 255);
+
+	// detect a colour in ROI
+	cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
+	inRange(imageHSV, col1, col2, threshold);
+	cvtColor(threshold, imageROI, COLOR_GRAY2RGBA);
+	imageROI.copyTo(image(region));
+}
+
+void DetectColourInROI(byte **raw, int width, int height, cv::Rect region, int hue1, int sat1, int val1, int hue2, int sat2, int val2) {
+	using namespace cv;
+	using namespace std;
+
+	Mat image(height, width, CV_8UC4, *raw);
+
+	// Process frame here
+	// => Colour detection in ROI
+	//cout << "ROI: " << region.x << ", " << region.y << ", " << region.width << ", " << region.height << endl;
+	Mat imageROI = image(region);
+
+	Mat imageHSV;
+	Mat threshold;
+
+	Scalar col1(hue1, sat1, val1);
+	Scalar col2(hue2, sat2, val2);
 
 	cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
 	inRange(imageHSV, col1, col2, threshold);
@@ -44,66 +69,57 @@ void ProcessImageRegion(byte **raw, int width, int height, cv::Rect region) {
 	imageROI.copyTo(image(region));
 }
 
-//TODO: "GetColourBlobs(List<Colors>...)"
-/*
-TODO!
-=> From:
-https://pysource.com/2019/02/15/detecting-colors-hsv-color-space-opencv-with-python/
+//TODO: use "const ...& ..."?
+bool FindBlobs(byte **raw, int width, int height, cv::Rect region, bool modifyImage, int numberColours, byte* hsvValues) {
 
-previous based on:
-https://stackoverflow.com/questions/19189482/color-detection-in-opencv
-look at:
-- info about colours in opencv (& HSV)
-	http://www.shervinemami.info/colorConversion.html
-- pick HSV value from pixel on screen:
-    https://pastebin.com/EHz2a0YP
+// "hsvValues" must be of length "numberColours * 3" (H, S, V value for each colour)
 
-# Red color
-	low_red = np.array([161, 155, 84])
-	high_red = np.array([179, 255, 255])
-	red_mask = cv2.inRange(hsv_frame, low_red, high_red)
-	red = cv2.bitwise_and(frame, frame, mask=red_mask)
+	using namespace cv;
+	using namespace std;
 
-	# Blue color
-	low_blue = np.array([94, 80, 2])
-	high_blue = np.array([126, 255, 255])
-	blue_mask = cv2.inRange(hsv_frame, low_blue, high_blue)
-	blue = cv2.bitwise_and(frame, frame, mask=blue_mask)
+	bool success = false;
 
-	# Green color
-	low_green = np.array([25, 52, 72])
-	high_green = np.array([102, 255, 255])
-	green_mask = cv2.inRange(hsv_frame, low_green, high_green)
-	green = cv2.bitwise_and(frame, frame, mask=green_mask)
-
-	# Every color except white
-	low = np.array([0, 42, 0])
-	high = np.array([179, 255, 255])
-	mask = cv2.inRange(hsv_frame, low, high)
-	result = cv2.bitwise_and(frame, frame, mask=mask)
-*/
-/*
-void ProcessImageRegion(byte **raw, int width, int height, cv::Rect region) {
-    using namespace cv;
-    using namespace std;
 
 	Mat image(height, width, CV_8UC4, *raw);
 
+	// Extract ROI
 	//cout << "ROI: " << region.x << ", " << region.y << ", " << region.width << ", " << region.height << endl;
+//TODO: check that ROI is in image!
 	Mat imageROI = image(region);
 
 	Mat imageHSV;
 	Mat threshold;
 
-	cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
-	inRange(imageHSV, Scalar(106, 60, 90), Scalar(124, 255, 255), threshold);
+//TODO: to remove, test purpose
+//addWeighted(image(region), 1.0, imageROI, 0.25, 0.0, image(region));
 
-	cvtColor(threshold, imageROI, COLOR_GRAY2RGBA);
+	for (int i = 0; i < numberColours; ++i) {
+//cout << "color " << i << " of " << numberColours << endl;
+//cout << "1:" << (int)*(hsvValues + i*6) << ", " << (int)*(hsvValues + i*6 + 1) << ", "<< (int)*(hsvValues + i*6 + 2) << endl;
+//cout << "2:" << (int)*(hsvValues + i*6 + 3) << ", " << (int)*(hsvValues + i*6 + 4) << ", " << (int)*(hsvValues + i*6 + 5) << endl;
 
-//TODO: do something else with found data...
-	imageROI.copyTo(image(region));
+//TODO: should be set before, and kept instead of recomputed for every frame
+//=> Good for testing though
+		// Set HSV colour
+		byte* offset = (hsvValues + i * 6);
+		Scalar col1((int)*offset, (int)*(offset + 1), (int)*(offset + 2));
+		Scalar col2((int)*(offset + 3), (int)*(offset + 4), (int)*(offset + 5));
+
+		// Detect HSV colour
+		cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
+		inRange(imageHSV, col1, col2, threshold);
+
+//TODO: Do something else with found data
+//=> Continue process
+Mat tmp;
+cvtColor(threshold, tmp, COLOR_GRAY2RGBA);
+add(image(region), tmp, image(region));
+	}
+
+//TODO: return true; (check found data?)
+	return success;
 }
-*/
+
 
 #ifdef __cplusplus
 }
