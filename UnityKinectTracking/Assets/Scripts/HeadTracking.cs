@@ -7,12 +7,15 @@ public class HeadTracking : MonoBehaviour {
 
     const int COLOR_WIDTH = KinectInputManager.COLOR_WIDTH;
     const int COLOR_HEIGHT = KinectInputManager.COLOR_HEIGHT;
+    const int DEPTH_WIDTH = KinectInputManager.DEPTH_WIDTH;
+    const int DEPTH_HEIGHT = KinectInputManager.DEPTH_HEIGHT;
 
     public KinectInputManager kinectInputManager;
     public BodyTracker2D bodyTracker;
     public BodyTracker3D bodyTracker3D;
     public Image image;
 
+    public int headWidth = 20;
     public int roiWidthFactor = 2; // twice the head width
     public int roiHeightFactor = 2; // twice the head height
 //TODO: change names!?
@@ -26,11 +29,12 @@ public class HeadTracking : MonoBehaviour {
 
     Texture2D texture;
     byte[] hsvValues;
+    int roiSize;
 
 
     void Awake() {
         texture = new Texture2D(COLOR_WIDTH, COLOR_HEIGHT, TextureFormat.BGRA32, false);
-//        texture = new Texture2D(KinectInputManager.DEPTH_WIDTH, KinectInputManager.DEPTH_HEIGHT, TextureFormat.Alpha8, false);
+//        texture = new Texture2D(DEPTH_WIDTH, DEPTH_HEIGHT, TextureFormat.Alpha8, false);
 
         hsvValues = new byte[18];
 /*
@@ -59,6 +63,8 @@ public class HeadTracking : MonoBehaviour {
 
     void Start() {
         image.material.mainTexture = texture;
+
+        roiSize = (headWidth * COLOR_WIDTH) / (2 * 100);
     }
 
     void Update() {
@@ -72,13 +78,15 @@ public class HeadTracking : MonoBehaviour {
             if (position != Vector2.zero) {
                 if ((position.x < COLOR_WIDTH) && (position.y < COLOR_HEIGHT)) {
 
-//TODO: should check bodyTracker3D as well
-//TODO: same IDs for 2D & 3D?
-Vector3 pos = bodyTracker3D.GetPosition(id, JointType.Head);
-//Debug.Log("Head.z: " + pos.z);
-//TODO: determine using the depth value OR body index data (dependent on distance!)
-int roiWidth = 200 * roiWidthFactor;
-int roiHeight = 200 * roiHeightFactor;
+//TODO: should check if valid bodyTracker3D as well
+                    Vector3 pos = bodyTracker3D.GetPosition(id, JointType.Head);
+
+                    // roiSize = (headWidth(m) * res) / (dist(m) * 2)
+                    int roiWidth = (int)(roiSize / -pos.z);
+                    int roiHeight = roiWidth; // square area
+
+                    roiWidth *= roiWidthFactor;
+                    roiHeight *= roiHeightFactor;
 
 //TODO: use "min" & "max" methods directly
                     int roiX = (int)position.x - roiWidth / 2;
@@ -104,7 +112,6 @@ int roiHeight = 200 * roiHeightFactor;
 //=> Here only for testing purpose (realtime value changes)
 hsvValues[0] = (byte)HSVGreenMin.x;
 hsvValues[1] = (byte)HSVGreenMin.y;
-Debug.Log("green min: " + hsvValues[0]);
 hsvValues[2] = (byte)HSVGreenMin.z;
 hsvValues[3] = (byte)HSVGreenMax.x;
 hsvValues[4] = (byte)HSVGreenMax.y;
@@ -126,7 +133,7 @@ hsvValues[17] = (byte)HSVOrangeMax.z;
 ////////
 
                     FindBlobs(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, hsvValues);
-//ApplyMask(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, bodyIndexImage, KinectInputManager.DEPTH_WIDTH, KinectInputManager.DEPTH_HEIGHT);
+//ApplyMask(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, bodyIndexImage, DEPTH_WIDTH, DEPTH_HEIGHT);
 
                     // continue process
                     //...
@@ -145,7 +152,7 @@ hsvValues[17] = (byte)HSVOrangeMax.z;
 
         for (int colorY = startY; colorY < endY; ++colorY) {
             for (int colorX = startX; colorX < endX; ++colorX) {
-                int colorIndex = (colorY * KinectInputManager.COLOR_WIDTH) + colorX;
+                int colorIndex = (colorY * COLOR_WIDTH) + colorX;
 
                 float colorMappedToDepthX = bodyIndexCoordinates[colorIndex].X;
                 float colorMappedToDepthY = bodyIndexCoordinates[colorIndex].Y;
@@ -155,8 +162,8 @@ hsvValues[17] = (byte)HSVOrangeMax.z;
                     int depthX = (int)(colorMappedToDepthX + 0.5f);
                     int depthY = (int)(colorMappedToDepthY + 0.5f);
 
-                    if ((depthX >= 0) && (depthX < KinectInputManager.DEPTH_WIDTH) && (depthY >= 0) && (depthY < KinectInputManager.DEPTH_HEIGHT)) {
-                        int depthIndex = (depthY * KinectInputManager.DEPTH_WIDTH) + depthX;
+                    if ((depthX >= 0) && (depthX < DEPTH_WIDTH) && (depthY >= 0) && (depthY < DEPTH_HEIGHT)) {
+                        int depthIndex = (depthY * DEPTH_WIDTH) + depthX;
                         if (bodyIndexImage[depthIndex] != 0xff) {
                             continue;
                         }

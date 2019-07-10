@@ -496,6 +496,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb0103ad3e5c5e34d8a2f8de995a235a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  kinectInputManager: {fileID: 64174588}
+  bodyTracker: {fileID: 43542854}
+  bodyTracker3D: {fileID: 43542856}
+  image: {fileID: 1423945385}
+  headWidth: 20
   roiWidthFactor: 2
   roiHeightFactor: 2
   HSVGreenMin: {x: 90, y: 96, z: 96}
@@ -504,10 +509,7 @@ MonoBehaviour:
   HSVPinkMax: {x: 175, y: 255, z: 255}
   HSVOrangeMin: {x: 7, y: 127, z: 127}
   HSVOrangeMax: {x: 20, y: 255, z: 255}
-  kinectInputManager: {fileID: 64174588}
-  bodyTracker: {fileID: 43542854}
-  bodyTracker3D: {fileID: 43542856}
-  image: {fileID: 1423945385}
+  filterBodyData: 1
 --- !u!1 &1347717592
 GameObject:
   m_ObjectHideFlags: 0
