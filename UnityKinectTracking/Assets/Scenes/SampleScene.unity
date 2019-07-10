@@ -224,7 +224,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   useColorInput: 1
-  useDepthInput: 0
+  useDepthInput: 1
   useBodyInput: 1
   useBodyIndexInput: 1
 --- !u!1 &360533080
@@ -498,7 +498,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roiWidthFactor: 2
   roiHeightFactor: 2
-  HSVGreenMin: {x: 90, y: 127, z: 127}
+  HSVGreenMin: {x: 90, y: 96, z: 96}
   HSVGreenMax: {x: 95, y: 255, z: 255}
   HSVPinkMin: {x: 165, y: 127, z: 127}
   HSVPinkMax: {x: 175, y: 255, z: 255}

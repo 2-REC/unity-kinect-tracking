@@ -8,6 +8,11 @@ public class HeadTracking : MonoBehaviour {
     const int COLOR_WIDTH = KinectInputManager.COLOR_WIDTH;
     const int COLOR_HEIGHT = KinectInputManager.COLOR_HEIGHT;
 
+    public KinectInputManager kinectInputManager;
+    public BodyTracker2D bodyTracker;
+    public BodyTracker3D bodyTracker3D;
+    public Image image;
+
     public int roiWidthFactor = 2; // twice the head width
     public int roiHeightFactor = 2; // twice the head height
 //TODO: change names!?
@@ -17,11 +22,7 @@ public class HeadTracking : MonoBehaviour {
     public Vector3Int HSVPinkMax = new Vector3Int(175, 255, 255);
     public Vector3Int HSVOrangeMin = new Vector3Int(7, 127, 127);
     public Vector3Int HSVOrangeMax = new Vector3Int(20, 255, 255);
-
-    public KinectInputManager kinectInputManager;
-    public BodyTracker2D bodyTracker;
-    public BodyTracker3D bodyTracker3D;
-    public Image image;
+    public bool filterBodyData = true;
 
     Texture2D texture;
     byte[] hsvValues;
@@ -74,39 +75,36 @@ public class HeadTracking : MonoBehaviour {
 //TODO: should check bodyTracker3D as well
 //TODO: same IDs for 2D & 3D?
 Vector3 pos = bodyTracker3D.GetPosition(id, JointType.Head);
-Debug.Log("Head.z: " + pos.z);
+//Debug.Log("Head.z: " + pos.z);
 //TODO: determine using the depth value OR body index data (dependent on distance!)
 int roiWidth = 200 * roiWidthFactor;
 int roiHeight = 200 * roiHeightFactor;
 
 //TODO: use "min" & "max" methods directly
-                    int x = (int)position.x - roiWidth / 2;
-                    int y = (int)position.y - roiHeight / 2;
-                    int w = roiWidth;
-                    int h = roiHeight;
+                    int roiX = (int)position.x - roiWidth / 2;
+                    int roiY = (int)position.y - roiHeight / 2;
+                    int roiW = roiWidth;
+                    int roiH = roiHeight;
 
-                    if (x < 0) x = 0;
-                    if (y < 0) y = 0;
-                    if ((x + w) >= COLOR_WIDTH) w = COLOR_WIDTH - 1 - x;
-                    if ((y + h) >= COLOR_HEIGHT) h = COLOR_HEIGHT - 1 - y;
+                    if (roiX < 0) roiX = 0;
+                    if (roiY < 0) roiY = 0;
+                    if ((roiX + roiW) >= COLOR_WIDTH) roiW = COLOR_WIDTH - 1 - roiX;
+                    if ((roiY + roiH) >= COLOR_HEIGHT) roiH = COLOR_HEIGHT - 1 - roiY;
 
-                    RectInt roi = new RectInt(x, y, w, h);
+                    RectInt roi = new RectInt(roiX, roiY, roiW, roiH);
 
 //                    var rawImage = kinectInputManager.GetColorBuffer();
 
-
-//var bodyIndexImage = kinectInputManager.GetBodyIndexBuffer();
-//Debug.Log("index size: " + bodyIndexImage.Length);
-
-//var bodyIndexImage = kinectInputManager.GetDepthBuffer();
-//Debug.Log("index size: " + bodyIndexImage.Length);
-
+                    if (filterBodyData) {
+                        FilterBodyData(rawImage, roiX, roiY, roiX + roiW, roiY + roiH);
+                    }
 
 ////////
 //TODO: TO REMOVE!
-//=> Here only for testing purpose
+//=> Here only for testing purpose (realtime value changes)
 hsvValues[0] = (byte)HSVGreenMin.x;
 hsvValues[1] = (byte)HSVGreenMin.y;
+Debug.Log("green min: " + hsvValues[0]);
 hsvValues[2] = (byte)HSVGreenMin.z;
 hsvValues[3] = (byte)HSVGreenMax.x;
 hsvValues[4] = (byte)HSVGreenMax.y;
@@ -139,6 +137,39 @@ hsvValues[17] = (byte)HSVOrangeMax.z;
 //TODO: don't need that (only here for display purpose)
         texture.LoadRawTextureData(rawImage);
         texture.Apply();
+    }
+
+    void FilterBodyData(byte[] rawImage, int startX, int startY, int endX, int endY) {
+        var bodyIndexImage = kinectInputManager.GetBodyIndexBuffer();
+        var bodyIndexCoordinates = kinectInputManager.GetDepthCoordinates();
+
+        for (int colorY = startY; colorY < endY; ++colorY) {
+            for (int colorX = startX; colorX < endX; ++colorX) {
+                int colorIndex = (colorY * KinectInputManager.COLOR_WIDTH) + colorX;
+
+                float colorMappedToDepthX = bodyIndexCoordinates[colorIndex].X;
+                float colorMappedToDepthY = bodyIndexCoordinates[colorIndex].Y;
+
+                if (!float.IsNegativeInfinity(colorMappedToDepthX) &&
+                        !float.IsNegativeInfinity(colorMappedToDepthY)) {
+                    int depthX = (int)(colorMappedToDepthX + 0.5f);
+                    int depthY = (int)(colorMappedToDepthY + 0.5f);
+
+                    if ((depthX >= 0) && (depthX < KinectInputManager.DEPTH_WIDTH) && (depthY >= 0) && (depthY < KinectInputManager.DEPTH_HEIGHT)) {
+                        int depthIndex = (depthY * KinectInputManager.DEPTH_WIDTH) + depthX;
+                        if (bodyIndexImage[depthIndex] != 0xff) {
+                            continue;
+                        }
+                    }
+                }
+
+                int index = colorIndex * 4;
+                rawImage[index] = 0;
+                rawImage[index + 1] = 0;
+                rawImage[index + 2] = 0;
+                rawImage[index + 3] = 0;
+            }
+        }
     }
 
 
