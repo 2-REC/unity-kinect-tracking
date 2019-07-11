@@ -1,14 +1,40 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
 using Windows.Kinect;
 
 public class HeadTracking : MonoBehaviour {
 
+    [StructLayout(LayoutKind.Sequential, Size = 4), Serializable]
+    public struct Scalar {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public double[] val;
+
+/*
+        public Scalar(double v1, double v2, double v3, double v4 = 0) {
+            val = new double[4];
+            val[0] = v1;
+            val[1] = v2;
+            val[2] = v3;
+            val[3] = v4;
+        }
+*/
+        public Scalar(Vector3Int v3i) {
+            val = new double[4];
+            val[0] = v3i.x;
+            val[1] = v3i.y;
+            val[2] = v3i.z;
+            val[3] = 0;
+        }
+    }
+
+
     const int COLOR_WIDTH = KinectInputManager.COLOR_WIDTH;
     const int COLOR_HEIGHT = KinectInputManager.COLOR_HEIGHT;
     const int DEPTH_WIDTH = KinectInputManager.DEPTH_WIDTH;
     const int DEPTH_HEIGHT = KinectInputManager.DEPTH_HEIGHT;
+
 
     public KinectInputManager kinectInputManager;
     public BodyTracker2D bodyTracker;
@@ -27,38 +53,28 @@ public class HeadTracking : MonoBehaviour {
     public Vector3Int HSVOrangeMax = new Vector3Int(20, 255, 255);
     public bool filterBodyData = true;
 
+
     Texture2D texture;
-    byte[] hsvValues;
     int roiSize;
+    Scalar[] minHSV;
+    Scalar[] maxHSV;
 
 
     void Awake() {
         texture = new Texture2D(COLOR_WIDTH, COLOR_HEIGHT, TextureFormat.BGRA32, false);
 //        texture = new Texture2D(DEPTH_WIDTH, DEPTH_HEIGHT, TextureFormat.Alpha8, false);
 
-        hsvValues = new byte[18];
-/*
-        hsvValues[0] = (byte)HSVGreenMin.x;
-        hsvValues[1] = (byte)HSVGreenMin.y;
-        hsvValues[2] = (byte)HSVGreenMin.z;
-        hsvValues[3] = (byte)HSVGreenMax.x;
-        hsvValues[4] = (byte)HSVGreenMax.y;
-        hsvValues[5] = (byte)HSVGreenMax.z;
+        minHSV = new Scalar[] {
+            new Scalar(HSVGreenMin),
+            new Scalar(HSVPinkMin),
+            new Scalar(HSVOrangeMin)
+        };
 
-        hsvValues[6] = (byte)HSVPinkMin.x;
-        hsvValues[7] = (byte)HSVPinkMin.y;
-        hsvValues[8] = (byte)HSVPinkMin.z;
-        hsvValues[9] = (byte)HSVPinkMax.x;
-        hsvValues[10] = (byte)HSVPinkMax.y;
-        hsvValues[11] = (byte)HSVPinkMax.z;
-
-        hsvValues[12] = (byte)HSVOrangeMin.x;
-        hsvValues[13] = (byte)HSVOrangeMin.y;
-        hsvValues[14] = (byte)HSVOrangeMin.z;
-        hsvValues[15] = (byte)HSVOrangeMax.x;
-        hsvValues[16] = (byte)HSVOrangeMax.y;
-        hsvValues[17] = (byte)HSVOrangeMax.z;
-*/
+        maxHSV = new Scalar[] {
+            new Scalar(HSVGreenMax),
+            new Scalar(HSVPinkMax),
+            new Scalar(HSVOrangeMax)
+        };
     }
 
     void Start() {
@@ -79,64 +95,38 @@ public class HeadTracking : MonoBehaviour {
                 if ((position.x < COLOR_WIDTH) && (position.y < COLOR_HEIGHT)) {
 
 //TODO: should check if valid bodyTracker3D as well
+//=> Or have a combined 2D+3D tracker...
                     Vector3 pos = bodyTracker3D.GetPosition(id, JointType.Head);
 
-                    // roiSize = (headWidth(m) * res) / (dist(m) * 2)
-                    int roiWidth = (int)(roiSize / -pos.z);
-                    int roiHeight = roiWidth; // square area
-
-                    roiWidth *= roiWidthFactor;
-                    roiHeight *= roiHeightFactor;
-
-//TODO: use "min" & "max" methods directly
-                    int roiX = (int)position.x - roiWidth / 2;
-                    int roiY = (int)position.y - roiHeight / 2;
-                    int roiW = roiWidth;
-                    int roiH = roiHeight;
-
-                    if (roiX < 0) roiX = 0;
-                    if (roiY < 0) roiY = 0;
-                    if ((roiX + roiW) >= COLOR_WIDTH) roiW = COLOR_WIDTH - 1 - roiX;
-                    if ((roiY + roiH) >= COLOR_HEIGHT) roiH = COLOR_HEIGHT - 1 - roiY;
-
-                    RectInt roi = new RectInt(roiX, roiY, roiW, roiH);
+                    RectInt roi = GetROI(position.x, position.y, -pos.z);
 
 //                    var rawImage = kinectInputManager.GetColorBuffer();
 
                     if (filterBodyData) {
-                        FilterBodyData(rawImage, roiX, roiY, roiX + roiW, roiY + roiH);
+                        FilterBodyData(rawImage, roi);
                     }
 
-////////
-//TODO: TO REMOVE!
-//=> Here only for testing purpose (realtime value changes)
-hsvValues[0] = (byte)HSVGreenMin.x;
-hsvValues[1] = (byte)HSVGreenMin.y;
-hsvValues[2] = (byte)HSVGreenMin.z;
-hsvValues[3] = (byte)HSVGreenMax.x;
-hsvValues[4] = (byte)HSVGreenMax.y;
-hsvValues[5] = (byte)HSVGreenMax.z;
+//////// RUNTIME_COLOURS - BEGIN
+//TODO: To remove, only for test purpose (runtime colours setting in Editor)
+minHSV = new Scalar[] {
+    new Scalar(HSVGreenMin),
+    new Scalar(HSVPinkMin),
+    new Scalar(HSVOrangeMin)
+};
 
-hsvValues[6] = (byte)HSVPinkMin.x;
-hsvValues[7] = (byte)HSVPinkMin.y;
-hsvValues[8] = (byte)HSVPinkMin.z;
-hsvValues[9] = (byte)HSVPinkMax.x;
-hsvValues[10] = (byte)HSVPinkMax.y;
-hsvValues[11] = (byte)HSVPinkMax.z;
+maxHSV = new Scalar[] {
+    new Scalar(HSVGreenMax),
+    new Scalar(HSVPinkMax),
+    new Scalar(HSVOrangeMax)
+};
+//////// RUNTIME_COLOURS - END
 
-hsvValues[12] = (byte)HSVOrangeMin.x;
-hsvValues[13] = (byte)HSVOrangeMin.y;
-hsvValues[14] = (byte)HSVOrangeMin.z;
-hsvValues[15] = (byte)HSVOrangeMax.x;
-hsvValues[16] = (byte)HSVOrangeMax.y;
-hsvValues[17] = (byte)HSVOrangeMax.z;
-////////
 
-                    FindBlobs(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, hsvValues);
-//ApplyMask(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, bodyIndexImage, DEPTH_WIDTH, DEPTH_HEIGHT);
+                    DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV);
 
                     // continue process
                     //...
+
                 }
             }
         }
@@ -146,9 +136,36 @@ hsvValues[17] = (byte)HSVOrangeMax.z;
         texture.Apply();
     }
 
-    void FilterBodyData(byte[] rawImage, int startX, int startY, int endX, int endY) {
+
+    RectInt GetROI(float x, float y, float cameraDistance) {
+        // roiSize = (headWidth(m) * res) / (dist(m) * 2)
+        int roiWidth = (int)(roiSize / cameraDistance);
+        int roiHeight = roiWidth; // square area
+
+        roiWidth *= roiWidthFactor;
+        roiHeight *= roiHeightFactor;
+
+        int roiX = (int)x - roiWidth / 2;
+        int roiY = (int)y - roiHeight / 2;
+        int roiW = roiWidth;
+        int roiH = roiHeight;
+
+        roiX = Math.Max(0, roiX);
+        roiY = Math.Max(0, roiY);
+        roiW = Math.Min(roiW, COLOR_WIDTH - 1 - roiX);
+        roiH = Math.Min(roiH, COLOR_HEIGHT - 1 - roiY);
+
+        return new RectInt(roiX, roiY, roiW, roiH);
+    }
+
+    void FilterBodyData(byte[] rawImage, RectInt roi) {
         var bodyIndexImage = kinectInputManager.GetBodyIndexBuffer();
         var bodyIndexCoordinates = kinectInputManager.GetDepthCoordinates();
+
+        int startX = roi.x;
+        int startY = roi.y;
+        int endX = roi.x + roi.width;
+        int endY = roi.y + roi.height;
 
         for (int colorY = startY; colorY < endY; ++colorY) {
             for (int colorX = startX; colorX < endX; ++colorX) {
@@ -188,13 +205,10 @@ hsvValues[17] = (byte)HSVOrangeMax.z;
     static extern void ProcessImageRegion(ref byte[] raw, int width, int height, RectInt roi);
 
     [DllImport("UnityOpenCV")]
-    static extern void DetectColourInROI(ref byte[] raw, int width, int height, RectInt region, int hue1, int sat1, int val1, int hue2, int sat2, int val2);
+    static extern void ApplyMask(ref byte[] raw, int width, int height, RectInt region, byte[] mask, int maskWidth, int maskHeight);
 */
 
-    [DllImport("UnityOpenCV")]
-    static extern bool FindBlobs(ref byte[] raw, int width, int height, RectInt region, bool modifyImage, int numberColours, byte[] hsvValues);
-
-    [DllImport("UnityOpenCV")]
-    static extern void ApplyMask(ref byte[] raw, int width, int height, RectInt region, byte[] mask, int maskWidth, int maskHeight);
+    [DllImport("UnityOpenCV", CallingConvention = CallingConvention.Cdecl)]
+    static extern bool DetectColoursInROI(ref byte[] ppRaw, int width, int height, RectInt region, bool modifyImage, int numberColours, Scalar[] pMinHSV, Scalar[] pMaxHSV);
 
 }

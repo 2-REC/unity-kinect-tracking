@@ -1,35 +1,33 @@
 #include "unity_opencv.h"
 
 #include "opencv2/opencv.hpp"
+#include "functions.h"
+
+using namespace cv;
+using namespace std;
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void ProcessImage(byte **raw, int width, int height) {
-    using namespace cv;
-    using namespace std;
 
-	Mat image(height, width, CV_8UC4, *raw);
+void ProcessImage(byte **ppRaw, int width, int height) {
 
-    // Process frame here
-	// => Simple example: Edge detection
+	Mat image(height, width, CV_8UC4, *ppRaw);
+
 	Mat edges;
 	Canny(image, edges, 50, 200);
 	cvtColor(edges, edges, COLOR_GRAY2RGBA);
 	multiply(image, edges, image);
 }
 
-void ProcessImageRegion(byte **raw, int width, int height, cv::Rect region) {
-    using namespace cv;
-    using namespace std;
+void ProcessImageRegion(byte **ppRaw, int width, int height, cv::Rect region) {
 
-	Mat image(height, width, CV_8UC4, *raw);
+	Mat image(height, width, CV_8UC4, *ppRaw);
 
-	// Process frame here
-	// => Colour detection in ROI
 	//cout << "ROI: " << region.x << ", " << region.y << ", " << region.width << ", " << region.height << endl;
-//TODO: check that ROI is in image!
+//TODO: Should check that ROI is in image!
 	Mat imageROI = image(region);
 
 	Mat imageHSV;
@@ -46,95 +44,15 @@ void ProcessImageRegion(byte **raw, int width, int height, cv::Rect region) {
 	imageROI.copyTo(image(region));
 }
 
-void DetectColourInROI(byte **raw, int width, int height, cv::Rect region, int hue1, int sat1, int val1, int hue2, int sat2, int val2) {
-	using namespace cv;
-	using namespace std;
 
-	Mat image(height, width, CV_8UC4, *raw);
+void ApplyMask(byte **ppRaw, int width, int height, cv::Rect region, byte* pMask, int maskWidth, int maskHeight) {
 
-	// Process frame here
-	// => Colour detection in ROI
-	//cout << "ROI: " << region.x << ", " << region.y << ", " << region.width << ", " << region.height << endl;
+	Mat image(height, width, CV_8UC4, *ppRaw);
+
+//TODO: Should check that ROI is in image!
 	Mat imageROI = image(region);
 
-	Mat imageHSV;
-	Mat threshold;
-
-	Scalar col1(hue1, sat1, val1);
-	Scalar col2(hue2, sat2, val2);
-
-	cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
-	inRange(imageHSV, col1, col2, threshold);
-	cvtColor(threshold, imageROI, COLOR_GRAY2RGBA);
-	imageROI.copyTo(image(region));
-}
-
-//TODO: use "const ...& ..."?
-// Example of detecting HSV colour ranges in ROI
-bool FindBlobs(byte **raw, int width, int height, cv::Rect region, bool modifyImage, int numberColours, byte* hsvValues) {
-
-// "hsvValues" must be of length "numberColours * 3" (H, S, V value for each colour)
-
-	using namespace cv;
-	using namespace std;
-
-	bool success = false;
-
-
-	Mat image(height, width, CV_8UC4, *raw);
-
-	// Extract ROI
-	//cout << "ROI: " << region.x << ", " << region.y << ", " << region.width << ", " << region.height << endl;
-//TODO: check that ROI is in image!
-	Mat imageROI = image(region);
-
-	Mat imageHSV;
-	Mat threshold;
-
-//TODO: to remove, test purpose
-//addWeighted(image(region), 1.0, imageROI, 0.25, 0.0, image(region));
-
-	for (int i = 0; i < numberColours; ++i) {
-//cout << "color " << i << " of " << numberColours << endl;
-//cout << "1:" << (int)*(hsvValues + i*6) << ", " << (int)*(hsvValues + i*6 + 1) << ", "<< (int)*(hsvValues + i*6 + 2) << endl;
-//cout << "2:" << (int)*(hsvValues + i*6 + 3) << ", " << (int)*(hsvValues + i*6 + 4) << ", " << (int)*(hsvValues + i*6 + 5) << endl;
-
-//TODO: should be set before, and kept instead of recomputed for every frame
-//=> Good for testing though
-		// Set HSV colour
-		byte* offset = (hsvValues + i * 6);
-		Scalar col1((int)*offset, (int)*(offset + 1), (int)*(offset + 2));
-		Scalar col2((int)*(offset + 3), (int)*(offset + 4), (int)*(offset + 5));
-
-		// Detect HSV colour
-		cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
-		inRange(imageHSV, col1, col2, threshold);
-
-//TODO: Do something else with found data
-//=> Continue process
-Mat tmp;
-cvtColor(threshold, tmp, COLOR_GRAY2RGBA);
-add(image(region), tmp, image(region));
-	}
-
-//TODO: return true; (check found data?)
-	return success;
-}
-
-
-// Example of applying a mask to the ROI
-// => Mask image is from different resolution
-// BUT = problem with matching!
-void ApplyMask(byte **raw, int width, int height, cv::Rect region, byte* mask, int maskWidth, int maskHeight) {
-	using namespace cv;
-	using namespace std;
-
-	Mat image(height, width, CV_8UC4, *raw);
-
-//TODO: check that ROI is in image!
-	Mat imageROI = image(region);
-
-	Mat imageMask(maskHeight, maskWidth, CV_8U, mask);
+	Mat imageMask(maskHeight, maskWidth, CV_8U, pMask);
 	cvtColor(imageMask, imageMask, COLOR_GRAY2BGRA);
 
 	Size size(width, height);
@@ -146,6 +64,40 @@ void ApplyMask(byte **raw, int width, int height, cv::Rect region, byte* mask, i
 	bitwise_and(imageROI, maskROI, imageROI);
 }
 
+
+//TODO: use "const ...& ..."?
+bool DetectColoursInROI(byte **ppRaw, int width, int height, Rect region, bool modifyImage, int numberColours, Scalar *pMinHSV, Scalar *pMaxHSV) {
+
+	bool success = false;
+
+	Mat image(height, width, CV_8UC4, *ppRaw);
+
+	// Extract ROI
+//TODO: Should check that ROI is in image!
+	Mat imageROI = image(region);
+
+	Mat imageHSV;
+	cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
+	vector<Mat> blobs = ExtractBlobs(imageHSV, numberColours, pMinHSV, pMaxHSV);
+
+//TODO: For display/debug purpose, can be removed
+		if (modifyImage) {
+			for (vector<Mat>::iterator it = blobs.begin(); it != blobs.end(); ++it) {
+				// apply mask to image
+				Mat tmp;
+				cvtColor(*it, tmp, COLOR_GRAY2RGBA);
+				add(image(region), tmp, image(region));
+			}
+		}
+
+//TODO: Do something else with found data
+//=> Continue process
+//...
+
+
+//TODO: return true; (check found data?)
+	return success;
+}
 
 
 #ifdef __cplusplus

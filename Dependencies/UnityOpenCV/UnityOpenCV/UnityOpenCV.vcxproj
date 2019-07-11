@@ -19,9 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="sources\functions.cpp" />
     <ClCompile Include="sources\unity_opencv.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sources\functions.h" />
     <ClInclude Include="sources\unity_opencv.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
