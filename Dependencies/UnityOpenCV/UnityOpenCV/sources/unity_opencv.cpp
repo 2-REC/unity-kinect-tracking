@@ -65,6 +65,7 @@ void ApplyMask(byte **ppRaw, int width, int height, cv::Rect region, byte* pMask
 }
 
 
+//TODO: change name
 //TODO: use "const ...& ..."?
 bool DetectColoursInROI(byte **ppRaw, int width, int height, Rect region, bool modifyImage, int numberColours, Scalar *pMinHSV, Scalar *pMaxHSV) {
 
@@ -76,23 +77,44 @@ bool DetectColoursInROI(byte **ppRaw, int width, int height, Rect region, bool m
 //TODO: Should check that ROI is in image!
 	Mat imageROI = image(region);
 
+	// Extract colour masks
 	Mat imageHSV;
 	cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
-	vector<Mat> blobs = ExtractBlobs(imageHSV, numberColours, pMinHSV, pMaxHSV);
-
+	vector<Mat> colorMasks = ExtractColorMasks(imageHSV, numberColours, pMinHSV, pMaxHSV);
+/*
 //TODO: For display/debug purpose, can be removed
-		if (modifyImage) {
-			for (vector<Mat>::iterator it = blobs.begin(); it != blobs.end(); ++it) {
-				// apply mask to image
-				Mat tmp;
-				cvtColor(*it, tmp, COLOR_GRAY2RGBA);
-				add(image(region), tmp, image(region));
-			}
+	if (modifyImage) {
+		for (vector<Mat>::iterator it = colorMasks.begin(); it != colorMasks.end(); ++it) {
+			// apply mask to image
+			Mat tmp;
+			cvtColor(*it, tmp, COLOR_GRAY2RGBA);
+			add(image(region), tmp, image(region));
 		}
+	}
+*/
 
-//TODO: Do something else with found data
-//=> Continue process
+	// Extract blobs
+	vector<vector<KeyPoint>> keypointsLists = ExtractBlobs(colorMasks);
+
+	// Get biggest blobs
+	for (vector<vector<KeyPoint>>::iterator keyPointsIterator = keypointsLists.begin(); keyPointsIterator != keypointsLists.end(); ++keyPointsIterator) {
+		GetBlob(*keyPointsIterator);
+	}
+
+//TODO: Continue process
 //...
+
+
+/*
+if (modifyImage) {
+	for (vector<Mat>::iterator it = colorMasks.begin(); it != colorMasks.end(); ++it) {
+		// apply mask to image
+		Mat tmp;
+		cvtColor(*it, tmp, COLOR_GRAY2RGBA);
+		add(image(region), tmp, image(region));
+	}
+}
+*/
 
 
 //TODO: return true; (check found data?)

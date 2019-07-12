@@ -3,6 +3,10 @@
 
 #include "opencv2/opencv.hpp"
 
-std::vector<cv::Mat> ExtractBlobs(cv::Mat imageHSV, int numberColours, cv::Scalar *pMinHSV, cv::Scalar *pMaxHSV);
+std::vector<cv::Mat> ExtractColorMasks(const cv::Mat& imageHSV, const int& numberColours, cv::Scalar *pMinHSV, cv::Scalar *pMaxHSV);
+
+std::vector<std::vector<cv::KeyPoint>> ExtractBlobs(const std::vector<cv::Mat>& masks);
+
+void GetBlob(const std::vector<cv::KeyPoint>& keypoints);
 
 #endif // FUNCTIONS_H
