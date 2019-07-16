@@ -122,11 +122,33 @@ maxHSV = new Scalar[] {
 //////// RUNTIME_COLOURS - END
 
 
-                    DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV);
+//                    DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV);
+Vector3[] blobs = new Vector3[3];
+//                    DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV, ref blobs);
+                    bool detect = DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV, ref blobs);
+                    if (detect) {
+//Debug.Log("blobs: " + blobs[0] + ", " + blobs[1] + ", " + blobs[2]);
 
-                    // continue process
-                    //...
+//TODO!
+                        // check position & size of blobs
+                        //...
 
+                        // get 3D positions
+                        //...
+                        int x = (int)blobs[0].x + roi.x;
+                        int y = (int)blobs[0].y + roi.y;
+Debug.Log("POS: " + x + ", " + y);
+                        ushort depth = GetDepthFromColor(x, y);
+Debug.Log("POS: " + x + ", " + y + ", " + depth);
+
+//?
+                        // position blobs in 3D space
+                        //...
+
+//TODO: continue process
+//... (compute angles...)
+
+                    }
                 }
             }
         }
@@ -196,6 +218,24 @@ maxHSV = new Scalar[] {
         }
     }
 
+    ushort GetDepthFromColor(int colorX, int colorY) {
+        var depthCoordinates = kinectInputManager.GetDepthCoordinates();
+        var depthBuffer = kinectInputManager.GetDepthBuffer();
+
+        int colorIndex = (colorY * COLOR_WIDTH) + colorX;
+//Debug.Log("colorIndex: " + colorIndex);
+
+        float colorMappedToDepthX = depthCoordinates[colorIndex].X;
+        float colorMappedToDepthY = depthCoordinates[colorIndex].Y;
+
+        int depthX = (int)(colorMappedToDepthX + 0.5f);
+        int depthY = (int)(colorMappedToDepthY + 0.5f);
+
+        int depthIndex = (depthY * DEPTH_WIDTH) + depthX;
+Debug.Log("depthIndex: " + depthIndex);
+Debug.Log("depth: " + depthBuffer[depthIndex]);
+        return depthBuffer[depthIndex];
+    }
 
 /*
     [DllImport("UnityOpenCV")]
@@ -209,6 +249,7 @@ maxHSV = new Scalar[] {
 */
 
     [DllImport("UnityOpenCV", CallingConvention = CallingConvention.Cdecl)]
-    static extern bool DetectColoursInROI(ref byte[] ppRaw, int width, int height, RectInt region, bool modifyImage, int numberColours, Scalar[] pMinHSV, Scalar[] pMaxHSV);
+//    static extern bool DetectColoursInROI(ref byte[] ppRaw, int width, int height, RectInt region, bool modifyImage, int numberColours, Scalar[] pMinHSV, Scalar[] pMaxHSV);
+    static extern bool DetectColoursInROI(ref byte[] ppRaw, int width, int height, RectInt region, bool modifyImage, int numberColours, Scalar[] pMinHSV, Scalar[] pMaxHSV, ref Vector3[] ppBlobs);
 
 }

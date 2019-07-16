@@ -34,37 +34,34 @@ vector<vector<KeyPoint>> ExtractBlobs(const vector<Mat>& masks) {
 }
 
 //TODO: rename?
-void GetBlob(const vector<KeyPoint>& keypoints) {
+KeyPoint GetBlob(const vector<KeyPoint>& keypoints) {
 
-cout << "points: " << keypoints.size() << endl;
+//cout << "points: " << keypoints.size() << endl;
 	float sizeMax = 0.0;
-	Point2f position;
+	KeyPoint keyPoint;
 	if (!keypoints.empty()) {
 //TODO: should have an "ideal" size (determined from size of real objects and distance from camera)
+//=> or simply discard in Unity if not satisfiable
 		// get biggest blob
 		for (vector<KeyPoint>::const_iterator pointIterator = keypoints.begin(); pointIterator != keypoints.end(); ++pointIterator) {
 			const float blobSize = (*pointIterator).size;
-cout << "octave: " << (*pointIterator).octave << endl;
+//cout << "octave: " << (*pointIterator).octave << endl;
 			if (blobSize > sizeMax) {
 				sizeMax = blobSize;
 //TODO: need to explicitly make a copy?
-				position = (*pointIterator).pt;
+				keyPoint = *pointIterator;
 			}
 		}
 	}
 
-//TODO: should check against a minimal acceptable size...
-	if (sizeMax > 0.0) {
-//TODO: add found blob (position & size)
-//...
-cout << "MAX: " << sizeMax << endl;
-cout << "POS: " << position.x << ", " << position.y << endl;
-	}
-	else {
-		// set "zero" blob
-//TODO: ...
+	if (sizeMax == 0.0) {
+		// no key point
+		keyPoint.pt.x = 0.0;
+		keyPoint.pt.y = 0.0;
+		keyPoint.size = 0.0;
 	}
 
+	return keyPoint;
 }
 
 

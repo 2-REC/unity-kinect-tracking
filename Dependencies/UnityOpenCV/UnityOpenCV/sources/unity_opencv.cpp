@@ -67,7 +67,7 @@ void ApplyMask(byte **ppRaw, int width, int height, cv::Rect region, byte* pMask
 
 //TODO: change name
 //TODO: use "const ...& ..."?
-bool DetectColoursInROI(byte **ppRaw, int width, int height, Rect region, bool modifyImage, int numberColours, Scalar *pMinHSV, Scalar *pMaxHSV) {
+bool DetectColoursInROI(byte **ppRaw, int width, int height, Rect region, bool modifyImage, int numberColours, Scalar *pMinHSV, Scalar *pMaxHSV, Point3f **ppBlobs) {
 
 	bool success = false;
 
@@ -81,7 +81,7 @@ bool DetectColoursInROI(byte **ppRaw, int width, int height, Rect region, bool m
 	Mat imageHSV;
 	cvtColor(imageROI, imageHSV, COLOR_BGR2HSV);
 	vector<Mat> colorMasks = ExtractColorMasks(imageHSV, numberColours, pMinHSV, pMaxHSV);
-/*
+
 //TODO: For display/debug purpose, can be removed
 	if (modifyImage) {
 		for (vector<Mat>::iterator it = colorMasks.begin(); it != colorMasks.end(); ++it) {
@@ -91,33 +91,30 @@ bool DetectColoursInROI(byte **ppRaw, int width, int height, Rect region, bool m
 			add(image(region), tmp, image(region));
 		}
 	}
-*/
+
 
 	// Extract blobs
 	vector<vector<KeyPoint>> keypointsLists = ExtractBlobs(colorMasks);
 
+
 	// Get biggest blobs
+	vector<KeyPoint> blobs;
 	for (vector<vector<KeyPoint>>::iterator keyPointsIterator = keypointsLists.begin(); keyPointsIterator != keypointsLists.end(); ++keyPointsIterator) {
-		GetBlob(*keyPointsIterator);
+		KeyPoint keyPoint = GetBlob(*keyPointsIterator);
+		blobs.push_back(keyPoint);
 	}
 
-//TODO: Continue process
-//...
 
-
-/*
-if (modifyImage) {
-	for (vector<Mat>::iterator it = colorMasks.begin(); it != colorMasks.end(); ++it) {
-		// apply mask to image
-		Mat tmp;
-		cvtColor(*it, tmp, COLOR_GRAY2RGBA);
-		add(image(region), tmp, image(region));
+	// Set output sizes & positions
+	for (int i = 0; i < blobs.size(); ++i) {
+		KeyPoint keyPoint = blobs[i];
+		Point3f pt(keyPoint.pt.x, keyPoint.pt.y, keyPoint.size);
+		(*ppBlobs)[i] = pt;
+		if (keyPoint.size != 0.0) {
+			success = true; // have a key point
+		}
 	}
-}
-*/
 
-
-//TODO: return true; (check found data?)
 	return success;
 }
 

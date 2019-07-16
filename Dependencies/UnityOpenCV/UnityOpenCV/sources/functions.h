@@ -7,6 +7,6 @@ std::vector<cv::Mat> ExtractColorMasks(const cv::Mat& imageHSV, const int& numbe
 
 std::vector<std::vector<cv::KeyPoint>> ExtractBlobs(const std::vector<cv::Mat>& masks);
 
-void GetBlob(const std::vector<cv::KeyPoint>& keypoints);
+cv::KeyPoint GetBlob(const std::vector<cv::KeyPoint>& keypoints);
 
 #endif // FUNCTIONS_H

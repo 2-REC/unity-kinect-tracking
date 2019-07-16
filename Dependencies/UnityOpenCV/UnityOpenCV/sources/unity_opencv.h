@@ -34,7 +34,8 @@ extern "C" {
 	 * Detects several colours in ROI
 	 * => Can specify if modifies the original image
 	 */
-	__declspec(dllexport) bool DetectColoursInROI(byte **ppRaw, int width, int height, cv::Rect region, bool modifyImage, int numberColours, cv::Scalar *pMinHSV, cv::Scalar *pMaxHSV);
+//	__declspec(dllexport) bool DetectColoursInROI(byte **ppRaw, int width, int height, cv::Rect region, bool modifyImage, int numberColours, cv::Scalar *pMinHSV, cv::Scalar *pMaxHSV);
+	__declspec(dllexport) bool DetectColoursInROI(byte **ppRaw, int width, int height, cv::Rect region, bool modifyImage, int numberColours, cv::Scalar *pMinHSV, cv::Scalar *pMaxHSV, cv::Point3f **ppBlobs);
 
 #ifdef __cplusplus
 }
