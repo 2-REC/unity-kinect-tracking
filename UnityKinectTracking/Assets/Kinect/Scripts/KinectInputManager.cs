@@ -293,4 +293,51 @@ public class KinectInputManager : MonoBehaviour {
         return point;
     }
 
+/*
+    ushort GetDepthFromColor(int colorX, int colorY) {
+        int colorIndex = (colorY * COLOR_WIDTH) + colorX;
+//Debug.Log("colorIndex: " + colorIndex);
+
+        float colorMappedToDepthX = pDepthCoordinates[colorIndex].X;
+        float colorMappedToDepthY = pDepthCoordinates[colorIndex].Y;
+
+        int depthX = (int)(colorMappedToDepthX + 0.5f);
+        int depthY = (int)(colorMappedToDepthY + 0.5f);
+
+        int depthIndex = (depthY * DEPTH_WIDTH) + depthX;
+Debug.Log("depthIndex: " + depthIndex);
+Debug.Log("depth: " + pDepthBuffer[depthIndex]);
+        return pDepthBuffer[depthIndex];
+    }
+*/
+
+    public Vector3 GetWorldPositionFromColor(int colorX, int colorY) {
+        int colorIndex = (colorY * COLOR_WIDTH) + colorX;
+//Debug.Log("colorIndex: " + colorIndex);
+
+        float colorMappedToDepthX = pDepthCoordinates[colorIndex].X;
+        float colorMappedToDepthY = pDepthCoordinates[colorIndex].Y;
+
+        int depthX = (int)(colorMappedToDepthX + 0.5f);
+        int depthY = (int)(colorMappedToDepthY + 0.5f);
+        int depthIndex = (depthY * DEPTH_WIDTH) + depthX;
+//Debug.Log("depthIndex: " + depthIndex);
+//Debug.Log("depth: " + pDepthBuffer[depthIndex]);
+
+//Debug.Log("Mapped coordinates: " + colorMappedToDepthX + ", " + colorMappedToDepthY);
+        Vector3 position = GetWorldPositionFromDepth(colorMappedToDepthX, colorMappedToDepthY, pDepthBuffer[depthIndex]);
+//Debug.Log("DEPTH: " + position.x + ", " + position.y + ", " + position.z);
+        return position;
+    }
+
+    Vector3 GetWorldPositionFromDepth(float colorX, float colorY, ushort depth) {
+        DepthSpacePoint depthSpacePoint = new DepthSpacePoint {
+            X = colorX,
+            Y = colorY
+        };
+
+        CameraSpacePoint p = coordinateMapper.MapDepthPointToCameraSpace(depthSpacePoint, depth);
+        return new Vector3(p.X, p.Y, p.Z);
+    }
+
 }

@@ -76,6 +76,7 @@ SimpleBlobDetector::Params InitDetectorParameters() {
 	detectorParams.filterByColor = 1;
 	detectorParams.blobColor = 255;
 
+//TODO: Area should be dependent on input (distance from camera)
 	detectorParams.filterByArea = true;
 	detectorParams.minArea = 20;
 

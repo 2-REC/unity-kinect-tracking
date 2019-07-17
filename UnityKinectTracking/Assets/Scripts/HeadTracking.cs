@@ -45,12 +45,12 @@ public class HeadTracking : MonoBehaviour {
     public int roiWidthFactor = 2; // twice the head width
     public int roiHeightFactor = 2; // twice the head height
 //TODO: change names!?
-    public Vector3Int HSVGreenMin = new Vector3Int(90, 127, 127);
-    public Vector3Int HSVGreenMax = new Vector3Int(95, 255, 255);
-    public Vector3Int HSVPinkMin = new Vector3Int(165, 127, 127);
-    public Vector3Int HSVPinkMax = new Vector3Int(175, 255, 255);
-    public Vector3Int HSVOrangeMin = new Vector3Int(7, 127, 127);
-    public Vector3Int HSVOrangeMax = new Vector3Int(20, 255, 255);
+    public Vector3Int leftHSVMin = new Vector3Int(90, 127, 127);  // greenish
+    public Vector3Int leftHSVMax = new Vector3Int(95, 255, 255);
+    public Vector3Int rightHSVMin = new Vector3Int(165, 127, 127);  // pinkish
+    public Vector3Int rightHSVMax = new Vector3Int(175, 255, 255);
+    public Vector3Int topHSVMin = new Vector3Int(7, 127, 127);  // orangish
+    public Vector3Int topHSVMax = new Vector3Int(20, 255, 255);
     public bool filterBodyData = true;
 
 
@@ -65,15 +65,15 @@ public class HeadTracking : MonoBehaviour {
 //        texture = new Texture2D(DEPTH_WIDTH, DEPTH_HEIGHT, TextureFormat.Alpha8, false);
 
         minHSV = new Scalar[] {
-            new Scalar(HSVGreenMin),
-            new Scalar(HSVPinkMin),
-            new Scalar(HSVOrangeMin)
+            new Scalar(leftHSVMin),
+            new Scalar(rightHSVMin),
+            new Scalar(topHSVMin)
         };
 
         maxHSV = new Scalar[] {
-            new Scalar(HSVGreenMax),
-            new Scalar(HSVPinkMax),
-            new Scalar(HSVOrangeMax)
+            new Scalar(leftHSVMax),
+            new Scalar(rightHSVMax),
+            new Scalar(topHSVMax)
         };
     }
 
@@ -109,39 +109,41 @@ public class HeadTracking : MonoBehaviour {
 //////// RUNTIME_COLOURS - BEGIN
 //TODO: To remove, only for test purpose (runtime colours setting in Editor)
 minHSV = new Scalar[] {
-    new Scalar(HSVGreenMin),
-    new Scalar(HSVPinkMin),
-    new Scalar(HSVOrangeMin)
+    new Scalar(leftHSVMin),
+    new Scalar(rightHSVMin),
+    new Scalar(topHSVMin)
 };
 
 maxHSV = new Scalar[] {
-    new Scalar(HSVGreenMax),
-    new Scalar(HSVPinkMax),
-    new Scalar(HSVOrangeMax)
+    new Scalar(leftHSVMax),
+    new Scalar(rightHSVMax),
+    new Scalar(topHSVMax)
 };
 //////// RUNTIME_COLOURS - END
 
 
-//                    DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV);
-Vector3[] blobs = new Vector3[3];
-//                    DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV, ref blobs);
+                    Vector3[] blobs = new Vector3[3];
                     bool detect = DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV, ref blobs);
                     if (detect) {
 //Debug.Log("blobs: " + blobs[0] + ", " + blobs[1] + ", " + blobs[2]);
 
-//TODO!
-                        // check position & size of blobs
-                        //...
+                        bool haveLeft = GetPosition((int)blobs[0].x + roi.x, (int)blobs[0].y + roi.y, blobs[0].z, out Vector3 left);
+                        if (haveLeft) {
+Debug.Log("LEFT POS: " + left.x + ", " + left.y + ", " + left.z);
+                        }
 
-                        // get 3D positions
-                        //...
-                        int x = (int)blobs[0].x + roi.x;
-                        int y = (int)blobs[0].y + roi.y;
-Debug.Log("POS: " + x + ", " + y);
-                        ushort depth = GetDepthFromColor(x, y);
-Debug.Log("POS: " + x + ", " + y + ", " + depth);
+                        bool haveRight = GetPosition((int)blobs[1].x + roi.x, (int)blobs[1].y + roi.y, blobs[1].z, out Vector3 right);
+                        if (haveRight) {
+Debug.Log("RIGHT POS: " + right.x + ", " + right.y + ", " + right.z);
+                        }
+//TODO: orangish colour not reliable (too close to skin...!?)
+/*
+                        bool haveTop = GetPosition((int)blobs[2].x + roi.x, (int)blobs[2].y + roi.y, blobs[2].z, out Vector3 top);
+                        if (haveTop) {
+Debug.Log("TOP POS: " + top.x + ", " + top.y + ", " + top.z);
+                        }
+*/
 
-//?
                         // position blobs in 3D space
                         //...
 
@@ -218,23 +220,28 @@ Debug.Log("POS: " + x + ", " + y + ", " + depth);
         }
     }
 
-    ushort GetDepthFromColor(int colorX, int colorY) {
-        var depthCoordinates = kinectInputManager.GetDepthCoordinates();
-        var depthBuffer = kinectInputManager.GetDepthBuffer();
+    bool GetPosition(int x, int y, float size, out Vector3 position) {
+        position = Vector3.zero;
 
-        int colorIndex = (colorY * COLOR_WIDTH) + colorX;
-//Debug.Log("colorIndex: " + colorIndex);
+//Debug.Log("IN: " + x + ", " + y + ", size: " + size);
+        if (size == 0.0) {
+            return false;
+        }
 
-        float colorMappedToDepthX = depthCoordinates[colorIndex].X;
-        float colorMappedToDepthY = depthCoordinates[colorIndex].Y;
+//TODO!
+        // check position & size of blobs
+        //...
+// - size "close" to 1/4 head size (?) (& >0)
+// (size is diameter in pixels)
+// ?- X & Y in ROI
+// - depth "close" to Head's Z
+//Debug.Log("HEAD Z: " + -pos.z);
 
-        int depthX = (int)(colorMappedToDepthX + 0.5f);
-        int depthY = (int)(colorMappedToDepthY + 0.5f);
 
-        int depthIndex = (depthY * DEPTH_WIDTH) + depthX;
-Debug.Log("depthIndex: " + depthIndex);
-Debug.Log("depth: " + depthBuffer[depthIndex]);
-        return depthBuffer[depthIndex];
+        position = kinectInputManager.GetWorldPositionFromColor(x, y);
+//Debug.Log("OUT: " + position);
+
+        return true;
     }
 
 
