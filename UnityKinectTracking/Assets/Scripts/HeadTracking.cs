@@ -237,19 +237,8 @@ Debug.Log("depth: " + depthBuffer[depthIndex]);
         return depthBuffer[depthIndex];
     }
 
-/*
-    [DllImport("UnityOpenCV")]
-    static extern void ProcessImage(ref byte[] raw, int width, int height);
-
-    [DllImport("UnityOpenCV")]
-    static extern void ProcessImageRegion(ref byte[] raw, int width, int height, RectInt roi);
-
-    [DllImport("UnityOpenCV")]
-    static extern void ApplyMask(ref byte[] raw, int width, int height, RectInt region, byte[] mask, int maskWidth, int maskHeight);
-*/
 
     [DllImport("UnityOpenCV", CallingConvention = CallingConvention.Cdecl)]
-//    static extern bool DetectColoursInROI(ref byte[] ppRaw, int width, int height, RectInt region, bool modifyImage, int numberColours, Scalar[] pMinHSV, Scalar[] pMaxHSV);
     static extern bool DetectColoursInROI(ref byte[] ppRaw, int width, int height, RectInt region, bool modifyImage, int numberColours, Scalar[] pMinHSV, Scalar[] pMaxHSV, ref Vector3[] ppBlobs);
 
 }

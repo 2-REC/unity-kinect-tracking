@@ -92,9 +92,6 @@ public class ImageBodyTrackerExample : MonoBehaviour {
     }
 
 
-//    [DllImport("UnityOpenCV")]
-//    static extern void ProcessImage(ref byte[] raw, int width, int height);
-
     [DllImport("UnityOpenCV")]
     static extern void ProcessImageRegion(ref byte[] raw, int width, int height, RectInt roi);
 
