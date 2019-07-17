@@ -53,6 +53,9 @@ public class HeadTracking : MonoBehaviour {
     public Vector3Int topHSVMax = new Vector3Int(20, 255, 255);
     public bool filterBodyData = true;
 
+//TODO: remove...
+    public Transform head;
+    public Text text;
 
     Texture2D texture;
     int roiSize;
@@ -125,17 +128,21 @@ maxHSV = new Scalar[] {
                     Vector3[] blobs = new Vector3[3];
                     bool detect = DetectColoursInROI(ref rawImage, COLOR_WIDTH, COLOR_HEIGHT, roi, true, 3, minHSV, maxHSV, ref blobs);
                     if (detect) {
-//Debug.Log("blobs: " + blobs[0] + ", " + blobs[1] + ", " + blobs[2]);
 
                         bool haveLeft = GetPosition((int)blobs[0].x + roi.x, (int)blobs[0].y + roi.y, blobs[0].z, out Vector3 left);
-                        if (haveLeft) {
-Debug.Log("LEFT POS: " + left.x + ", " + left.y + ", " + left.z);
-                        }
+/*
+if (haveLeft) {
+    Debug.Log("LEFT POS: " + left.x + ", " + left.y + ", " + left.z);
+}
+*/
 
                         bool haveRight = GetPosition((int)blobs[1].x + roi.x, (int)blobs[1].y + roi.y, blobs[1].z, out Vector3 right);
-                        if (haveRight) {
-Debug.Log("RIGHT POS: " + right.x + ", " + right.y + ", " + right.z);
-                        }
+/*
+if (haveRight) {
+    Debug.Log("RIGHT POS: " + right.x + ", " + right.y + ", " + right.z);
+}
+*/
+
 //TODO: orangish colour not reliable (too close to skin...!?)
 /*
                         bool haveTop = GetPosition((int)blobs[2].x + roi.x, (int)blobs[2].y + roi.y, blobs[2].z, out Vector3 top);
@@ -144,11 +151,17 @@ Debug.Log("TOP POS: " + top.x + ", " + top.y + ", " + top.z);
                         }
 */
 
-                        // position blobs in 3D space
-                        //...
-
 //TODO: continue process
-//... (compute angles...)
+// (handle 3rd point & compute other angles...)
+                        if (haveLeft && haveRight) {
+                            Vector3 delta = left - right;
+//Debug.Log("DELTA: " + delta.x + ", " + delta.y + ", " + delta.z);
+
+                            float angle = Vector3.SignedAngle(delta, Vector3.forward, Vector3.up) -90.0f;
+//Debug.Log("YAW: " + angle);
+                            head.eulerAngles = new Vector3(.0f, angle, .0f);
+                            text.text = "YAW: " + ((int)(angle*100)) / 100.0f;
+                        }
 
                     }
                 }
