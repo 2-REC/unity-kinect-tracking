@@ -40,6 +40,8 @@ public class HeadTracking : MonoBehaviour {
     public BodyTracker2D bodyTracker;
     public BodyTracker3D bodyTracker3D;
 
+    public TrackingListener trackingListener;
+
     public int headWidth = 20;
     public int roiWidthFactor = 2; // twice the head width
     public int roiHeightFactor = 2; // twice the head height
@@ -52,14 +54,12 @@ public class HeadTracking : MonoBehaviour {
     public Vector3Int topHSVMax = new Vector3Int(20, 255, 255);
     public bool filterBodyData = true;
 
-    public Transform head;
     bool foundOrientation;
     Vector3 orientation;
 
 //////// DISPLAY - BEGIN
     Texture2D texture;
     public Image image;
-    public Text text;
 //////// DISPLAY - MID
 
     int roiSize;
@@ -162,10 +162,7 @@ public class HeadTracking : MonoBehaviour {
         }
 
         if (foundOrientation) {
-            head.eulerAngles = orientation;
-//////// DISPLAY - BEGIN
-            text.text = "YAW: " + ((int)(orientation.y * 100)) / 100.0f;
-//////// DISPLAY - MID
+            trackingListener.NotifyChange(orientation);
         }
 
 //////// DISPLAY - BEGIN
