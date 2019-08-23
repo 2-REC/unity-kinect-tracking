@@ -193,6 +193,7 @@ public class HeadTracking : MonoBehaviour {
         return new RectInt(roiX, roiY, roiW, roiH);
     }
 
+    //TODO: Move to Kinect manager (?)
     void FilterBodyData(byte[] rawImage, RectInt roi) {
         var bodyIndexImage = kinectInputManager.GetBodyIndexBuffer();
         var bodyIndexCoordinates = kinectInputManager.GetDepthCoordinates();
