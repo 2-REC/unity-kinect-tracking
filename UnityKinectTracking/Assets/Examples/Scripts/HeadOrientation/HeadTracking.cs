@@ -113,6 +113,10 @@ public class HeadTracking : MonoBehaviour {
                     Vector3 pos = bodyTracker3D.GetPosition(id, JointType.Head);
 
                     RectInt roi = GetROI(position.x, position.y, -pos.z);
+//TODO: what size minimum?
+                    if ((roi.width <= 10) || (roi.height <= 10)) {
+                        return;
+                    }
 
 //////// DISPLAY - MID
 //                    var rawImage = kinectInputManager.GetColorBuffer();

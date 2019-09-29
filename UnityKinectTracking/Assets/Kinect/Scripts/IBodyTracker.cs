@@ -60,7 +60,16 @@ public abstract class IBodyTracker : MonoBehaviour {
         }
 
         // delete untracked bodies
+/*
         foreach(ulong trackingId in bodies.Keys) {
+            if(!trackedIds.Contains(trackingId)) {
+                limitedTrackedIds.Remove(trackingId);
+                bodies.Remove(trackingId);
+            }
+        }
+*/
+        List<ulong> keys = new List<ulong>(bodies.Keys);
+        foreach (ulong trackingId in keys) {
             if(!trackedIds.Contains(trackingId)) {
                 limitedTrackedIds.Remove(trackingId);
                 bodies.Remove(trackingId);
